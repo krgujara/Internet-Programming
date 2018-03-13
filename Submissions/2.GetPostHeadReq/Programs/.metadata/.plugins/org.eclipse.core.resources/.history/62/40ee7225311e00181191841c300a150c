@@ -1,0 +1,316 @@
+import java.io.*;
+import java.net.*;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.logging.*;
+    
+public class RequestProcessor implements Runnable {
+  
+  private final static Logger logger = Logger.getLogger(
+      RequestProcessor.class.getCanonicalName());
+
+  private File rootDirectory;
+  private String indexFileName = "index.html";
+  private Socket connection;
+  private String[] tokens;
+  private String version = "";
+  private String root;
+  private Writer out;
+  private BufferedReader in;
+  private OutputStream raw;
+  
+  public RequestProcessor(File rootDirectory, 
+      String indexFileName, Socket connection) {
+        
+    if (rootDirectory.isFile()) {
+      throw new IllegalArgumentException(
+          "rootDirectory must be a directory, not a file");   
+    }
+    try {
+      rootDirectory = rootDirectory.getCanonicalFile();
+    } catch (IOException ex) {
+    }
+    this.rootDirectory = rootDirectory;
+
+    if (indexFileName != null) this.indexFileName = indexFileName;
+    this.connection = connection;
+  }
+  
+  @Override
+  public void run() {
+    // for security checks
+    root = rootDirectory.getPath();
+    try {              
+      raw = new BufferedOutputStream(connection.getOutputStream());         
+      out = new OutputStreamWriter(raw);
+      in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+      StringBuilder requestLine = new StringBuilder();
+      while (true) {
+        int c = in.read(	);
+        if (c == '\r' || c == '\n') break;
+        requestLine.append((char) c);
+      }
+      
+      String get = requestLine.toString();
+      System.out.println("Request Line : "+get);
+      logger.info(connection.getRemoteSocketAddress() + " " + get);
+      
+      tokens = get.split("\\s+");
+      String method = tokens[0];
+      if (method.equals("GET")) {
+    	  	getRequestHandler();
+      } 
+      else if (method.equals("HEAD"))
+      {
+    	  	headRequestHandler();
+      }
+      else if (method.equals("POST"))
+      {
+    	  	postRequestHandler();
+      }
+      else { // method does not equal "GET"
+        notImplemented();
+      }
+    } catch (IOException ex) {
+      logger.log(Level.WARNING, 
+          "Error talking to " + connection.getRemoteSocketAddress(), ex);
+    } finally {
+      try {
+        connection.close();        
+      }
+      catch (IOException ex) {} 
+    }
+  }
+
+  private void notImplemented()
+  {  
+	 try {
+	  String body = new StringBuilder("<HTML>\r\n")
+	            .append("<HEAD><TITLE>Not Implemented</TITLE>\r\n")
+	            .append("</HEAD>\r\n")
+	            .append("<BODY>")
+	            .append("<H1>HTTP Error 501: Not Implemented</H1>\r\n")
+	            .append("</BODY></HTML>\r\n").toString();
+	        if (version.startsWith("HTTP/")) { // send a MIME header
+	        	sendHeader(out, "HTTP/1.0 501 Not Implemented", 
+				            "text/html; charset=utf-8", body.length());
+	        }
+	        out.write(body);
+	        out.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+  }
+  private void headRequestHandler() {
+	    String fileName = tokens[1];
+	      System.out.println("File Name : "+fileName);
+	      if (fileName.endsWith("/")) fileName += indexFileName;
+	      String contentType = 
+	          URLConnection.getFileNameMap().getContentTypeFor(fileName);
+	      if (tokens.length > 2) {
+	        version = tokens[2];
+	      }
+	      try
+	      {
+	      File theFile = new File(rootDirectory, 
+	          fileName.substring(0, fileName.length()));
+	      System.out.println(theFile);
+	      if (theFile.canRead() 
+	          // Don't let clients outside the document root
+	          && theFile.getCanonicalPath().startsWith(root)) {
+	        byte[] theData;
+			
+				theData = Files.readAllBytes(theFile.toPath());
+			
+	        if (version.startsWith("HTTP/")) { // send a MIME header
+	          sendHeader(out, "HTTP/1.0 200 OK", contentType, theData.length);
+	        } 
+	    
+	     
+	      } else { // can't find the file
+	        String body = new StringBuilder("<HTML>\r\n")
+	            .append("<HEAD><TITLE>File Not Found</TITLE>\r\n")
+	            .append("</HEAD>\r\n")
+	            .append("<BODY>")
+	            .append("<H1>HTTP Error 404: File Not Found</H1>\r\n")
+	            .append("</BODY></HTML>\r\n").toString();
+	        if (version.startsWith("HTTP/")) { // send a MIME header
+	          sendHeader(out, "HTTP/1.0 404 File Not Found", 
+	              "text/html; charset=utf-8", body.length());
+	        	} 
+	        	out.flush();
+	      	}  
+	      } catch (IOException e) {
+		// TODO Auto-generated catch block
+	    	  e.printStackTrace();
+	      }
+
+  }
+
+  private void getRequestHandler()
+  {
+      String fileName = tokens[1];
+      System.out.println("File Name : "+fileName);
+      if (fileName.endsWith("/")) fileName += indexFileName;
+      String contentType = 
+          URLConnection.getFileNameMap().getContentTypeFor(fileName);
+      if (tokens.length > 2) {
+        version = tokens[2];
+      }
+      try
+      {
+      File theFile = new File(rootDirectory, 
+          fileName.substring(0, fileName.length()));
+      System.out.println(theFile);
+      if (theFile.canRead() 
+          // Don't let clients outside the document root
+          && theFile.getCanonicalPath().startsWith(root)) {
+        byte[] theData;
+		
+			theData = Files.readAllBytes(theFile.toPath());
+		
+        if (version.startsWith("HTTP/")) { // send a MIME header
+          sendHeader(out, "HTTP/1.0 200 OK", contentType, theData.length);
+        } 
+    
+        // send the file; it may be an image or other binary data 
+        // so use the underlying output stream 
+        // instead of the writer
+        raw.write(theData);
+        raw.flush();
+      } else { // can't find the file
+        String body = new StringBuilder("<HTML>\r\n")
+            .append("<HEAD><TITLE>File Not Found</TITLE>\r\n")
+            .append("</HEAD>\r\n")
+            .append("<BODY>")
+            .append("<H1>HTTP Error 404: File Not Found</H1>\r\n")
+            .append("</BODY></HTML>\r\n").toString();
+        if (version.startsWith("HTTP/")) { // send a MIME header
+          sendHeader(out, "HTTP/1.0 404 File Not Found", 
+              "text/html; charset=utf-8", body.length());
+        	} 
+        	out.write(body);
+        	out.flush();
+      	}  
+      } catch (IOException e) {
+	// TODO Auto-generated catch block
+    	  e.printStackTrace();
+      }
+}
+  private void postRequestHandler() 
+  {
+	  	// tokens[1] indiacate the CGI on server. 
+	     String fileName = tokens[1];	
+	     String message = "";
+	      HashMap<String, String> entries = readFileAndGetEntries(fileName);
+	    		  
+	      
+	      if (tokens.length > 2) {
+	        version = tokens[2];
+	      }
+	     // read headers
+	      // read the headers
+	      String s ;
+	      try {
+			while(!(s = in.readLine()).equals(""))
+			  {
+			  		System.out.println(s);
+			  }
+	
+	      System.out.println("\n");
+	      
+	      // read the message
+	      String s1 = null ;
+	      while((s1 =in.readLine())!=null)
+	      {
+	    	  		if (s1.isEmpty())
+	    	  		{
+	    	  			break;
+	    	  		}
+	      		System.out.println(s1);
+	      }
+	      while((s1= in.readLine())!=null)
+	      {
+	    	  	message = s1;
+	      }
+	      // message = username:John&password:Smith
+	      // get username and password from this
+	      String[] tokens = message.split("&");
+	      
+	      // username
+	      String username = tokens[0].split(":")[1];
+	      String password = tokens[1].split(":")[1];
+	      System.out.println(username + " " + password);
+	      String contentType =  "text/plain; charset=utf-8";
+		  	
+	      // checking if the entries are present in the database
+	      Iterator it = entries.entrySet().iterator();
+	      	
+	      while(it.hasNext())
+	      {
+	    	  	Entry<String, String> entry = (Entry)it.next();
+	    	  	if (entry.getKey().equals(username) && entry.getValue().equals(password))
+	    	  	{
+	    	  		String return_string = "Welcome " + username;
+	    	  	   sendHeader(out, "HTTP/1.0 200 OK", contentType, return_string.length());
+	            	out.write(return_string);
+	            	out.flush();
+	    	  		return;
+	    	  	}
+	      }
+	      String return_string = "Incorrect username or password";
+	      sendHeader(out, "HTTP/1.0 403 Forbidden", contentType, return_string.length());
+      		out.write(return_string);
+      		out.flush();
+	      
+	  	} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+}
+  private HashMap<String, String> readFileAndGetEntries(String filename)
+  {
+	  HashMap<String, String> entry_map = new HashMap<>();
+	  int c;
+	  final int EOF = -1;
+	  try
+      {
+      File theFile = new File(rootDirectory, 
+          filename.substring(0, filename.length()));
+      System.out.println(theFile);
+      if (theFile.canRead() 
+          // Don't let clients outside the document root
+          && theFile.getCanonicalPath().startsWith(root)) {
+    	  		List<String> entries = Files.readAllLines(theFile.toPath());
+    	  
+    	  	for (String entry : entries)
+    	  	{
+    	  			String[] tokens = entry.trim().split(" ");
+    	  			entry_map.put(tokens[0],tokens[1]);
+    	  	}
+    	  }      	
+      }catch(Exception e)
+	  {
+    	  	System.out.println("Exception :" + e);
+	  }
+	  System.out.println(entry_map);
+	  return entry_map;
+
+  }
+  
+  private void sendHeader(Writer out, String responseCode,
+      String contentType, int length)
+      throws IOException {
+    out.write(responseCode + "\r\n");
+    Date now = new Date();
+    out.write("Date: " + now + "\r\n");
+    out.write("Server: JHTTP 2.0\r\n");
+    out.write("Content-length: " + length + "\r\n");
+    out.write("Content-type: " + contentType + "\r\n\r\n");
+    out.flush();
+  }
+}

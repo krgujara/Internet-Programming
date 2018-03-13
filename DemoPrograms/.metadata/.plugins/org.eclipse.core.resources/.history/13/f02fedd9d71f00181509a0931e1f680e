@@ -1,0 +1,24 @@
+import java.net.*;
+public class NIDemo {
+
+	public static void main(String[] args)
+	{
+		try {
+			NetworkInterface ni = NetworkInterface.getByName("etho");
+			
+			if (ni == null) {
+				System.out.println("No such interface");
+			}
+			else
+			{
+				System.out.println(ni);
+			}
+		}catch(SocketException e)
+		{
+			System.out.println("Couldnot list sockets");
+		}
+		
+	}
+}
+
+

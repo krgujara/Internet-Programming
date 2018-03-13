@@ -1,0 +1,46 @@
+!SESSION 2018-03-01 16:33:44.718 -----------------------------------------------
+eclipse.buildId=4.7.0.I20170612-0950
+java.version=1.8.0_131
+java.vendor=Oracle Corporation
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.java.product -keyring /Users/komalgujarathi/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -product org.eclipse.epp.package.java.product -keyring /Users/komalgujarathi/.eclipse_keyring
+
+!ENTRY org.eclipse.core.net 1 0 2018-03-01 16:34:05.627
+!MESSAGE System property http.nonProxyHosts has been set to local|*.local|169.254/16|*.169.254/16 by an external source. This value will be overwritten using the values from the preferences
+
+!ENTRY org.eclipse.equinox.preferences 4 4 2018-03-01 16:34:21.277
+!MESSAGE Exception saving preferences to: /Users/komalgujarathi/.p2/org.eclipse.equinox.p2.engine/profileRegistry/_Users_komalgujarathi_eclipse_java-oxygen_Eclipse.app_Contents_Eclipse.profile/.data/.settings/org.eclipse.equinox.p2.artifact.repository.prefs.
+!STACK 0
+java.io.FileNotFoundException: /Users/komalgujarathi/.p2/org.eclipse.equinox.p2.engine/profileRegistry/_Users_komalgujarathi_eclipse_java-oxygen_Eclipse.app_Contents_Eclipse.profile/.data/.settings/org.eclipse.equinox.p2.artifact.repository.prefs.bak (Permission denied)
+	at java.io.FileOutputStream.open0(Native Method)
+	at java.io.FileOutputStream.open(FileOutputStream.java:270)
+	at java.io.FileOutputStream.<init>(FileOutputStream.java:213)
+	at java.io.FileOutputStream.<init>(FileOutputStream.java:162)
+	at org.eclipse.core.internal.preferences.SafeFileOutputStream.<init>(SafeFileOutputStream.java:54)
+	at org.eclipse.core.internal.preferences.EclipsePreferences.write(EclipsePreferences.java:279)
+	at org.eclipse.core.internal.preferences.EclipsePreferences.save(EclipsePreferences.java:1076)
+	at org.eclipse.equinox.internal.p2.engine.ProfilePreferences.doSave(ProfilePreferences.java:139)
+	at org.eclipse.equinox.internal.p2.engine.ProfilePreferences$SaveJob.run(ProfilePreferences.java:51)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:56)
+
+!ENTRY org.eclipse.equinox.p2.engine 2 0 2018-03-01 16:34:21.333
+!MESSAGE Exception saving profile preferences
+!STACK 0
+org.osgi.service.prefs.BackingStoreException: Exception saving preferences to: /Users/komalgujarathi/.p2/org.eclipse.equinox.p2.engine/profileRegistry/_Users_komalgujarathi_eclipse_java-oxygen_Eclipse.app_Contents_Eclipse.profile/.data/.settings/org.eclipse.equinox.p2.artifact.repository.prefs.
+	at org.eclipse.core.internal.preferences.EclipsePreferences.write(EclipsePreferences.java:285)
+	at org.eclipse.core.internal.preferences.EclipsePreferences.save(EclipsePreferences.java:1076)
+	at org.eclipse.equinox.internal.p2.engine.ProfilePreferences.doSave(ProfilePreferences.java:139)
+	at org.eclipse.equinox.internal.p2.engine.ProfilePreferences$SaveJob.run(ProfilePreferences.java:51)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:56)
+Caused by: java.io.FileNotFoundException: /Users/komalgujarathi/.p2/org.eclipse.equinox.p2.engine/profileRegistry/_Users_komalgujarathi_eclipse_java-oxygen_Eclipse.app_Contents_Eclipse.profile/.data/.settings/org.eclipse.equinox.p2.artifact.repository.prefs.bak (Permission denied)
+	at java.io.FileOutputStream.open0(Native Method)
+	at java.io.FileOutputStream.open(FileOutputStream.java:270)
+	at java.io.FileOutputStream.<init>(FileOutputStream.java:213)
+	at java.io.FileOutputStream.<init>(FileOutputStream.java:162)
+	at org.eclipse.core.internal.preferences.SafeFileOutputStream.<init>(SafeFileOutputStream.java:54)
+	at org.eclipse.core.internal.preferences.EclipsePreferences.write(EclipsePreferences.java:279)
+	... 4 more
+
+!ENTRY org.eclipse.oomph.setup.ui 1 0 2018-03-01 16:34:24.740
+!MESSAGE Setup tasks were performed during startup updating 5 preferences. See '/Users/komalgujarathi/eclipse/java-oxygen/Eclipse.app/Contents/Eclipse/configuration/org.eclipse.oomph.setup/setup.log' for details

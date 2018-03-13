@@ -1,0 +1,36 @@
+import java.net.*;
+public class NIDemo {
+
+	public static void main(String[] args)
+	{
+		try {
+			InetAddress local = InetAddress.getByName("localhost");
+			NetworkInterface ni = NetworkInterface.getByInetAddress(local);
+			NetworkInterface ni2= NetworkInterface.getByIndex(0);
+			NetworkInterface ni3= NetworkInterface.getByName("lo0");
+			
+			
+			
+			if (ni == null) {
+				System.out.println("No such interface");
+			}
+			else
+			{
+				System.out.println(ni);
+				System.out.println(ni2);
+				System.out.println(ni3);
+				
+			}
+		}catch(UnknownHostException es)
+		{
+			System.out.println(es);
+		}
+		catch(SocketException e)
+		{
+			System.out.println("Couldnot list sockets");
+		}
+		
+	}
+}
+
+
